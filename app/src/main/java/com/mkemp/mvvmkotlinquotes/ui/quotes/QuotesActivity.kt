@@ -11,6 +11,8 @@ import kotlinx.android.synthetic.main.activity_quotes.*
 
 class QuotesActivity : AppCompatActivity()
 {
+    private lateinit var viewModel: QuotesViewModel
+
     override fun onCreate(savedInstanceState: Bundle?)
     {
         super.onCreate(savedInstanceState)
@@ -23,20 +25,38 @@ class QuotesActivity : AppCompatActivity()
     {
         val factory = InjectorUtils.provideQuotesViewModelFactory()
 //        val viewModel = ViewModelProviders.of(this, factory)
-        val viewModel: QuotesViewModel = ViewModelProvider(this, factory).get(QuotesViewModel::class.java)
-        viewModel.getQuotes().observe(this, Observer { quotes ->
-            val stringBuilder = StringBuilder()
-            quotes.forEach {quote ->
-                stringBuilder.append("$quote\n\n")
-            }
-            textView_quotes.text = stringBuilder.toString()
-        })
+
+        viewModel = ViewModelProvider(this, factory).get(QuotesViewModel::class.java)
+
+        viewModel.getQuotes().also {
+            it.observe(this, Observer { quotes: List<Quote> ->
+                showQuotes(quotes)
+            })
+        }
 
         button_add_quote.setOnClickListener {
-            val quote = Quote(editText_quote.text.toString(), editText_author.text.toString())
-            viewModel.addQuote(quote)
-            editText_quote.setText("")
-            editText_author.setText("")
+            addQuote()
         }
     }
+
+    private fun showQuotes(quotes: List<Quote>)
+    {
+        val builder = StringBuilder()
+
+        quotes.forEach {quote ->
+            builder.append("$quote\n\n")
+        }
+
+        textView_quotes.text = builder.toString()
+    }
+
+    private fun addQuote()
+    {
+        val quote = Quote(editText_quote.text.toString(), editText_author.text.toString())
+        viewModel.addQuote(quote)
+        editText_quote.setText("")
+        editText_author.setText("")
+    }
+
+
 }
